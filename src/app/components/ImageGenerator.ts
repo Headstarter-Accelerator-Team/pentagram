@@ -1,9 +1,16 @@
 "use client";
-
+import React from 'react'
 import { useState } from "react";
-import { generateImage } from "./actions/generateImage";
+import { generateImage } from "../actions/generateImage";
+import { Interface } from 'readline';
 
-export default function Home() {
+interface ImageGeneratorProps {
+    generateImage: (
+        text:string)
+        => Promise<{success:boolean, imageURl?: string, error?:string}>
+}
+
+export default function ImageGenerator({generateImage} : ImageGeneratorProps) {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [imageURL, setImageURL] = useState<string | null>(null);
@@ -13,19 +20,13 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/generate-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: inputText }),
-      });
-      if (!response.ok) {
+      const result = await generateImage(inputText)
+      if (!result.success) {
         throw new Error(
-          `Failed to generate image HTTP error, status: ${response.status}`
+          `Failed to generate image HTTP error, status: ${result.status}`
         );
       }
-      const data = await response.json();
+      const data = await result.json();
       console.log("", data);
       if (!data.success) {
         throw new Error(data.error || "Failed to generate image");
@@ -86,4 +87,3 @@ export default function Home() {
     </div>
   );
 }
-//  return <ImageGenerator generateImage={generateImage}/>
