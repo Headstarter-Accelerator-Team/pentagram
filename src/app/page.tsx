@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { generateImage } from "./actions/generateImage";
+import Gallery from "./components/Gallery";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
@@ -51,7 +52,9 @@ export default function Home() {
     // TODO: Update the UI here to show the images generated
 
     <div className="min-h-screen flex flex-col justify-between p-8">
-      <main className="flex-1">{/* Main content can go here */}</main>
+      <main className="flex-1">
+        <Gallery />
+      </main>
 
       {imageURL && (
         <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-lg">
