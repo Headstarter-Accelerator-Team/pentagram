@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import { generateImage } from "./actions/generateImage";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [imageURL, setImageURL] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +21,24 @@ export default function Home() {
         },
         body: JSON.stringify({ text: inputText }),
       });
-
+      if (!response.ok) {
+        throw new Error(
+          `Failed to generate image HTTP error, status: ${response.status}`
+        );
+      }
       const data = await response.json();
+      console.log("", data);
+      if (!data.success) {
+        throw new Error(data.error || "Failed to generate image");
+      }
+
+      if (data.imageURL) {
+        const img = new Image();
+        img.onload = () => {
+          setImageURL(data.imageURL);
+        };
+        img.src = data.imageURL;
+      }
       console.log(data);
       setInputText("");
     } catch (error) {
@@ -31,10 +50,21 @@ export default function Home() {
 
   return (
     // TODO: Update the UI here to show the images generated
-    
-    <div className="min-h-screen flex flex-col justify-between p-8">
-      <main className="flex-1">{/* Main content can go here */}</main>
 
+    <div className="min-h-screen flex flex-col justify-between p-8">
+      <main className="flex-1">
+        {imageURL && (
+          <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-lg">
+            <Image
+              src={imageURL}
+              alt="Generated artwork"
+              className="w-full h-auto"
+              width={800} // Specify width for better layout shifts handling
+              height={600} // Specify height to improve CLS (Cumulative Layout Shift)
+            />
+          </div>
+        )}
+      </main>
       <footer className="w-full max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="w-full">
           <div className="flex gap-2">
@@ -59,3 +89,4 @@ export default function Home() {
     </div>
   );
 }
+//  return <ImageGenerator generateImage={generateImage}/>
