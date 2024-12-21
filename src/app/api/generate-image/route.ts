@@ -10,19 +10,18 @@ export async function POST(request: Request) {
     // TODO: Call your Image Generation API here
     // For now, we'll just echo back the text
 
-    const apiSecret = request.headers.get("X-API-KEY");
+    const apiSecret = request.headers.get("X_API_KEY");
     if (apiSecret != process.env.API_SECRET) {
       return NextResponse.json({ error: "unauthroized" }, { status: 401 });
     }
-    const url = new URL(
-      "https://j00961010--sd-image-generator-model-generate.modal.run"
-    );
+
+    const url = new URL("MODAL_ENDPOINT");
     url.searchParams.set("prompt", text);
     console.log("request url:", url.toString());
 
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: { "X_API_KEY": process.env.API_KEY || "", Accept: "image/jpeg" },
+      headers: { X_API_KEY: process.env.API_KEY || "", Accept: "image/jpeg" },
     });
 
     if (!response.ok) {

@@ -1,54 +1,70 @@
 "use client";
 
-import React, { useState } from "react";
-import { generateImage } from "../actions/generateImage";
-import { Interface } from 'readline';
+import { useState } from "react";
 
 interface ImageGeneratorProps {
   generateImage: (
     text: string
-  ) => Promise<{ success: boolean; imageURL?: string; error?: string }>;
+  ) => Promise<{ success: boolean; imageUrl: string; error: string }>;
 }
 
-export default function ImageGenerator({
-  generateImage,
-}: ImageGeneratorProps) {
-  const [inputText, setInputText] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+export default function ImageGenerator({ generateImage }: ImageGeneratorProps) {
+  const [inputText, setInputText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+      e.preventDefault();
+      setIsLoading(true);
+      setImageUrl(null); // Clear previous image
+      setError(null); // Clear previous errors
 
-    try {
-      const result = await generateImage(inputText);
+      try {
+        const result = await generateImage(inputText);
 
-      if (!result.success) {
-        throw new Error(result.error || "Failed to generate image");
-      }
+        if(!result.success) {
+            throw new Error(result.error || "Failed to generate image");
+          }
+      
+        if (result.imageUrl) {
+              const img = new Image();
+              const url = result.imageUrl;
+              img.onload = () => {
+              setImageUrl(url) // Referencing the blob.url in route.ts
+            };
 
-      if (result.imageURL) {
-        setImageUrl(result.imageURL);
-      }
+            img.src = url;
+            } else {
+                throw new Error("No image URL returned from the server.");
+            }
 
-      setInputText("");
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+        setInputText("");
+        } catch (error) {
+            console.error("Error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
   return (
     <div className="min-h-screen flex flex-col justify-between p-8">
       <main className="flex-1">
-      {imageUrl && (
-        <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-lg">
-          <img src={imageUrl} alt="Generated artwork" className="w-full h-auto" />
-        </div>
-      )}
+        {imageUrl && (
+          <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-lg">
+            <img
+              src={imageUrl}
+              alt="Generated image"
+              className="w-full h-auto"
+            />
+          </div>
+        )}
+
+        {/* Display error if any */}
+        {error && <p className="text-red-500 mt-4">{error}</p>}
       </main>
+
       <footer className="w-full max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="w-full">
           <div className="flex gap-2">
@@ -73,3 +89,5 @@ export default function ImageGenerator({
     </div>
   );
 }
+
+
