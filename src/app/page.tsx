@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { generateImage } from "./actions/generateImage";
+//import { generateImage } from "./actions/generateImage";
 import Gallery from "./components/Gallery";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [imageURL, setImageURL] = useState<string | null>(null);
+  const [galleryTrigger, setGalleryTrigger] = useState(0); // New state variable
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +37,7 @@ export default function Home() {
         const img = new Image();
         img.onload = () => {
           setImageURL(data.imageURL);
+          setGalleryTrigger(prev => prev + 1);
         };
         img.src = data.imageURL;
       }
@@ -53,10 +55,10 @@ export default function Home() {
 
     <div className="min-h-screen flex flex-col justify-between p-8">
       <main className="flex-1">
-        <Gallery />
+        <Gallery trigger={galleryTrigger} />
       </main>
-
-      {imageURL && (
+      ;<></>
+      {/* {imageURL && (
         <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-lg">
           <img
             src={imageURL}
@@ -64,7 +66,7 @@ export default function Home() {
             className="w-full h-auto"
           />
         </div>
-      )}
+      )} */}
       <footer className="w-full max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="w-full">
           <div className="flex gap-2">

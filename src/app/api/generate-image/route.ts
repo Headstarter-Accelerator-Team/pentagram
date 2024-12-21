@@ -37,8 +37,9 @@ export async function POST(request: Request) {
     const imageBuffer = await response.arrayBuffer();
 
     const filename = `${crypto.randomUUID()}.jpg`;
+    //const blob = await put('folder/file.txt', 'Hello World!', { access: 'public' });
 
-    const blob = await put(filename, imageBuffer, {
+    const blob = await put(`pentagram/${filename}`, imageBuffer, {
       access: "public",
       contentType: "image/jpeg",
     });
