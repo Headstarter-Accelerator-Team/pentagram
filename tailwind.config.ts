@@ -15,4 +15,12 @@ export default {
     },
   },
   plugins: [],
+
+  include: ["./src/**/*"],
+  compilerOptions: {
+    strict: true,
+    esModuleInterop: true,
+    lib: ["dom", "es2015"],
+    jsx: "react",
+  },
 } satisfies Config;

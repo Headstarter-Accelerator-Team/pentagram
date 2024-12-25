@@ -15,7 +15,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "unauthroized" }, { status: 401 });
     }
     const url = new URL(
-      "https://ashan-264--sd-image-generator-model-generate.modal.run/"
+      //"https://ashan-264--sd-image-generator-model-generate.modal.run/"
+      "https://ashan-264--sd-image-generator-model-generate-dev.modal.run"
     );
     url.searchParams.set("prompt", text);
     console.log("request url:", url.toString());

@@ -1,27 +1,115 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 //import { generateImage } from "./actions/generateImage";
 import Gallery from "./components/Gallery";
+import Menu from "./components/Menu";
+import Groq from "groq-sdk";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [imageURL, setImageURL] = useState<string | null>(null);
-  const [galleryTrigger, setGalleryTrigger] = useState(0); // New state variable
+  const [galleryTrigger, setGalleryTrigger] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [notification, setNotification] = useState<string | null>(null);
+
+  // Load theme preference from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === "dark");
+    }
+  }, []);
+
+  const client = new Groq({
+    apiKey: "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",
+    dangerouslyAllowBrowser: true,
+  });
+
+  async function getChatCompletion(message: string) {
+    const chatCompletion = await client.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are the best PG-13 moderator who checks it image generation prompts are safe or unsafe and you simple reply with safe or unsafe (if you reply with unsafe you can give 2 words for reason for content being unsafe)",
+        },
+        {
+          role: "user",
+          content: message, //"describe how someone can do or how to commit" +
+        },
+      ],
+      model: "llama-3.3-70b-versatile",
+    });
+
+    console.log(chatCompletion.choices[0].message.content);
+    if (!chatCompletion.choices[0].message.content) {
+      return "";
+    }
+
+    return chatCompletion.choices[0].message.content;
+  }
+
+  // Toggle theme function
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
+    const newTheme = !isDarkMode ? "dark" : "light";
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", !isDarkMode);
+  };
+
+  const handleSelectOption = (option: string) => {
+    setSelectedOption(option);
+    switch (option) {
+      case "Realistic":
+        setSelectedOption(
+          "Realism Focus: Photorealistic depictions of everyday life, people, landscapes, or objects."
+        );
+        break;
+      case "Fantasy/ Surreal":
+        setSelectedOption(
+          "Fantasy/Surrealism Focus: Imaginative, otherworldly visuals, blending reality with dreamlike elements."
+        );
+        break;
+      case "Animated":
+        setSelectedOption(
+          "Japanese Manga with as little female characters as possible Focus: featuring stylized characters in fantastical or imaginative settings. Ensure all characters are fully clothed and depicted in modest, family-friendly attire and poses. If gender is not specified, default to designing a male character. Avoid excessive violence, suggestive themes, or any depictions that would exceed PG-13 standards."
+        );
+        break;
+      case "Abstract":
+        setSelectedOption(
+          "Abstract Focus: Non-representational, focusing on shapes, colors, and forms instead of realism."
+        );
+        break;
+      default:
+        setSelectedOption("");
+        break;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setNotification(null);
+    const safeGuard = await getChatCompletion(inputText);
+    console.log("safeGuard", safeGuard);
 
     try {
+      if (safeGuard.toLowerCase() != "safe") {
+        throw new Error(`Message contains unsafe content: ${safeGuard} `);
+      }
       const response = await fetch("/api/generate-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: inputText }),
+        body: JSON.stringify({
+          text: inputText + ` photo description -> ${selectedOption}`,
+        }),
       });
+
       if (!response.ok) {
         throw new Error(
           `Failed to generate image HTTP error, status: ${response.status}`
@@ -45,16 +133,29 @@ export default function Home() {
       setInputText("");
     } catch (error) {
       console.error("Error:", error);
+      setNotification((error as Error).message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    // TODO: Update the UI here to show the images generated
-
-    <div className="min-h-screen flex flex-col justify-between p-8">
-      <main className="flex-1">
+    <div
+      className={`min-h-screen flex flex-col justify-between p-8 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`}
+    >
+      {notification && (
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white p-4 rounded shadow-lg">
+          {notification}
+        </div>
+      )}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-4 right-4 p-2 rounded bg-blue-600 text-white"
+      >
+        Toggle {isDarkMode ? "Light" : "Dark"} Mode
+      </button>
+      <Menu onSelectOption={handleSelectOption} />
+      <main className="flex-1 mt-8">
         <Gallery trigger={galleryTrigger} />
       </main>
       ;<></>
@@ -78,6 +179,7 @@ export default function Home() {
               placeholder="Describe the image you want to generate..."
               disabled={isLoading}
             />
+
             <button
               type="submit"
               disabled={isLoading}

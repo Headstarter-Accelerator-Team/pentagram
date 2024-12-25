@@ -42,12 +42,12 @@ class Model:
     
     @modal.web_endpoint()
     def generate(self,request: Request, prompt: str = Query(...,description="The prompt for image generation")):
-        image = self.pipe(prompt, num_inference_steps=1,guidance_scale=0.0).images[0]
+        image = self.pipe(prompt, num_inference_steps=2,guidance_scale=1.0).images[0]
 
         api_key = request.headers.get("X-API-KEY")
 
-        if api_key != self.API_KEY:
-            raise Exception(status_code=401, detail="HTTP: unauthorized access")
+        #if api_key != self.API_KEY:
+        #    raise HTTPException(status_code=401, detail="HTTP: unauthorized access")
         
         buffer = io.BytesIO()
         image.save(buffer, format="JPEG")
@@ -64,12 +64,15 @@ class Model:
 
 @app.function(
     schedule=modal.Cron("*/5 * * * *"),
-    secrets=(modal.Secret.from_name("API_KEY"))
+    #secrets=(modal.Secret.from_name("API_KEY"))
+    
 )
 
 def keep_warm():
-    health_url="https://ashan-264--sd-image-generator-model-health.modal.run"
-    generate_url="https://ashan-264--sd-image-generator-model-generate.modal.run"
+    #health_url="https://ashan-264--sd-image-generator-model-health.modal.run"
+    #generate_url="https://ashan-264--sd-image-generator-model-generate.modal.run"
+    health_url="https://ashan-264--sd-image-generator-model-health-dev.modal.run"
+    generate_url= "https://ashan-264--sd-image-generator-model-generate-dev.modal.run"
 
     #First check health endpoint
     health_response= requests.get(health_url)
